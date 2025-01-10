@@ -38,5 +38,35 @@ namespace NZWalks.API.Controllers
 
             return Ok(mapper.Map<List<WalkDto>>(walkList));
         }
+
+        [HttpGet]
+        [Route("{id}")]
+        public async Task<IActionResult> GetById([FromRoute]Guid id)
+        {
+            var walkDomain = await repository.GetById(id);
+            if (walkDomain == null) return NotFound("No walk found for corresponding id");
+            return Ok(mapper.Map<WalkDto>(walkDomain));
+        }
+
+        [HttpPut]
+        [Route("{id}")]
+        public async Task<IActionResult> Update([FromRoute] Guid id , WalkUpdateRequest updateRequest)
+        {
+            var walkDomain = mapper.Map<Walk>(updateRequest);
+            walkDomain = await repository.UpdateWalk(id, walkDomain);
+            if (walkDomain == null) return NotFound("No walk found with corresponding id");
+
+            return Ok(mapper.Map<WalkDto>(walkDomain));
+        }
+
+        [HttpDelete]
+        [Route("{id}")]
+        public async Task<IActionResult> DeleteWalk([FromRoute]Guid id)
+        {
+            var walkDomain = await repository.DeleteWalk(id);
+            if (walkDomain == null) return (NotFound("No walk found for correspongind id"));
+
+            return Ok(mapper.Map<WalkDto>(walkDomain));
+        }
     }
 }
