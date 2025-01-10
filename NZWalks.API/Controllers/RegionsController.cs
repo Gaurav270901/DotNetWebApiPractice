@@ -2,10 +2,12 @@
 using System.Reflection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client.Region;
 using NZWalks.API.Data;
 using NZWalks.API.Models.Domain;
 using NZWalks.API.Models.DTO;
+using NZWalks.API.Repositories;
 
 namespace NZWalks.API.Controllers
 {
@@ -14,15 +16,17 @@ namespace NZWalks.API.Controllers
     public class RegionsController : ControllerBase
     {
         private NZWalksDBContext dbcontext;
+        private IRegionRepository regionRepository;
 
-        public RegionsController(NZWalksDBContext dBContext)
+        public RegionsController(NZWalksDBContext dBContext ,IRegionRepository regionRepository)
         {
             this.dbcontext = dBContext;
+            this.regionRepository = regionRepository;
         }
         [HttpGet]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
-            var regions = dbcontext.Regions.ToList();
+            var regions = await regionRepository.GetAllAsync();
             var regionsDto = new List<RegionDTO>();
             foreach(var region in regions)
             {
@@ -42,10 +46,9 @@ namespace NZWalks.API.Controllers
 
         [HttpGet]
         [Route("{id}")]
-        public IActionResult GetById(Guid id)
+        public async Task<IActionResult> GetById(Guid id)
         {
-            var region = dbcontext.Regions.Find(id);
-
+            var region = await regionRepository.GetById(id);
 
             if (region == null) return NotFound();
             var regionDto = new RegionDTO()
@@ -59,7 +62,7 @@ namespace NZWalks.API.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create([FromBody] AddRegionRequestDto regionRequest)
+        public async Task<IActionResult> Create([FromBody] AddRegionRequestDto regionRequest)
         {
             // map dto to domain model
             Region domainModel = new Region()
@@ -69,8 +72,7 @@ namespace NZWalks.API.Controllers
                 RegionImageUrl = regionRequest.RegionImageUrl
             };
 
-            dbcontext.Regions.Add(domainModel);
-            dbcontext.SaveChanges();
+            await regionRepository.CreateRegion(domainModel);
 
             var regionDto = new RegionDTO
             {
@@ -81,19 +83,20 @@ namespace NZWalks.API.Controllers
             };
             return CreatedAtAction(nameof(GetById), new { id = domainModel.Id }, regionDto);
         }
+
         [HttpPut]
         [Route("{id}")]
-        public IActionResult Update([FromRoute]Guid id, [FromBody] UpdateRegionRequestDto updateRequest)
+        public async Task<IActionResult> Update([FromRoute]Guid id, [FromBody] UpdateRegionRequestDto updateRequest)
         {
-            var region = dbcontext.Regions.FirstOrDefault(x=>x.Id == id);
-            if (region == null) return NotFound("No region found");
+            var region = new Region
+            {
+                Code = updateRequest.Code,
+                Name = updateRequest.Name,
+                RegionImageUrl = updateRequest.RegionImageUrl
+            };
 
-            region.Code = updateRequest.Code;
-            region.Name = updateRequest.Name;
-            region.RegionImageUrl = updateRequest.RegionImageUrl;
-
-            dbcontext.SaveChanges();//this property is already tracked by dbcontext so no need to update it 
-
+            var updatedRegion = await regionRepository.UpdateRegion(id, region);
+            if (updatedRegion == null) return NotFound("Region not found");
             var regionDto = new RegionDTO
             {
                 Id = region.Id,
@@ -108,14 +111,11 @@ namespace NZWalks.API.Controllers
 
         [HttpDelete]
         [Route("{id}")]
-        public IActionResult Delete([FromRoute] Guid id)
+        public async Task<IActionResult> Delete([FromRoute] Guid id)
         {
-            var region = dbcontext.Regions.FirstOrDefault(x => x.Id == id);
+            var region = await regionRepository.DeleteRegion(id);
             if (region == null) return NotFound("No region found");
-
-            dbcontext.Regions.Remove(region);
-            dbcontext.SaveChanges();
-            return Ok("Region deleted successfully");
+            return Ok("Region deleted successfully"); 
         }
 
     }
