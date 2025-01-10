@@ -115,7 +115,7 @@ namespace NZWalks.API.Controllers
 
             dbcontext.Regions.Remove(region);
             await dbcontext.SaveChangesAsync();
-            return Ok("Region deleted successfully");
+            return Ok("Region deleted successfully"); 
         }
 
     }
