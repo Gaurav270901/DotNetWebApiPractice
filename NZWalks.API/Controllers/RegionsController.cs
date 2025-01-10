@@ -87,7 +87,7 @@ namespace NZWalks.API.Controllers
         [ValidateModel]
         public async Task<IActionResult> Update([FromRoute]Guid id, [FromBody] UpdateRegionRequestDto updateRequest)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            //if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var updatedRegion = mapper.Map<Region>(updateRequest);
             updatedRegion = await regionRepository.UpdateRegion(id, updatedRegion);
