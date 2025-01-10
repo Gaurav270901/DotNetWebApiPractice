@@ -30,9 +30,41 @@ namespace NZWalks.API.Repositories
 
         }
 
-        public async Task<List<Walk>> GetAllWalks()
+        public async Task<List<Walk>> GetAllWalks(string? filterOn , string? filterQuery,
+            string? sortBy , bool isAsc , int pageNumber = 1, int pageSize = 1000)
         {
-            return (await dBContext.Walks.Include("Difficulty").Include("Region").ToListAsync());
+            var walks =  dBContext.Walks.Include("Difficulty").Include("Region").AsQueryable();
+
+            //filtering
+            if(!string.IsNullOrWhiteSpace(filterOn) && !string.IsNullOrWhiteSpace(filterQuery))
+            {
+                if(filterOn.Equals("Name",StringComparison.OrdinalIgnoreCase))
+                {
+                    walks = walks.Where(x => x.Name.Contains(filterQuery));
+
+                }
+            }
+
+            //sorting 
+
+            if (string.IsNullOrWhiteSpace(sortBy) == false)
+            {
+                if (sortBy.Equals("Name", StringComparison.OrdinalIgnoreCase))
+                {
+                    walks = isAsc ? walks.OrderBy(x => x.Name) : walks.OrderByDescending(x => x.Name);
+                }
+                else if (sortBy.Equals("Length", StringComparison.OrdinalIgnoreCase))
+                {
+                    walks = isAsc ? walks.OrderBy(x => x.LengthInKm) : walks.OrderByDescending(x => x.LengthInKm);
+                }
+            }
+
+            //pagination
+            var skipResults = (pageNumber - 1) * pageSize;
+
+            return await walks.Skip(skipResults).Take(pageSize).ToListAsync();
+
+            //return (await dBContext.Walks.Include("Difficulty").Include("Region").ToListAsync());
         }
 
         public async Task<Walk?> GetById(Guid id)

@@ -35,9 +35,12 @@ namespace NZWalks.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] string? filterOn, [FromQuery] string? filterQuery,
+            [FromQuery] string? sortBy, [FromQuery] bool? isAscending,
+            [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 1000) //which column to filter on 
         {
-            var walkList = await repository.GetAllWalks();
+            var walkList = await repository.GetAllWalks(filterOn, filterQuery, sortBy,
+                    isAscending ?? true, pageNumber, pageSize);
 
             return Ok(mapper.Map<List<WalkDto>>(walkList));
         }
