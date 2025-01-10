@@ -17,6 +17,8 @@ options.UseSqlServer(builder.Configuration.GetConnectionString("NZWalksConnectio
 
 //this line inject iregionrepo with sqlregionrepo
 builder.Services.AddScoped<IRegionRepository, SQLRegionRepository>();
+builder.Services.AddScoped<IWalkRepository, SQLWalkRepository>();
+
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 
 var app = builder.Build();
